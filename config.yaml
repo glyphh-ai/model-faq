@@ -1,0 +1,55 @@
+# FAQ Helpdesk Model
+# Matches user questions to knowledge base answers via HDC similarity.
+# Replace data/faq.jsonl with your own Q&A pairs.
+
+name: faq-helpdesk
+version: 0.1.0
+description: |
+  Domain-agnostic FAQ model. Encodes questions and answers into
+  HDC vectors. User queries match against stored Q&A pairs by
+  meaning, not keywords. Works for any helpdesk domain.
+
+author: Glyphh AI
+license: MIT
+
+encoder:
+  dimensions: 10000
+  seed: 42
+  temporal_source: auto
+
+auto_load_concepts: true
+
+tests:
+  file: tests.py
+  directory: tests/
+  data: tests/test-concepts.json
+
+roles:
+  question_id:
+    type: text
+    key_part: true
+
+  category:
+    type: categorical
+    values:
+      - account
+      - billing
+      - product
+      - shipping
+      - returns
+      - technical
+      - general
+
+  question:
+    type: text
+
+  answer:
+    type: text
+
+  keywords:
+    type: list
+    optional: true
+
+similarity:
+  threshold: 0.5
+  top_k: 3

@@ -1,0 +1,13 @@
+name: FAQ Helpdesk
+description: Domain-agnostic FAQ model for helpdesk and knowledge base agents. Matches user questions to answers via HDC similarity. Replace the sample data with your own Q&A pairs.
+version: 0.1.0
+author: Glyphh AI
+license: MIT
+icon: 💬
+category: faq
+public: true
+tags:
+  - faq
+  - helpdesk
+  - knowledge-base
+  - customer-support

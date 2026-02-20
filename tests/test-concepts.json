@@ -1,0 +1,54 @@
+{
+  "queries": [
+    {
+      "question": "I forgot my password and can't get in",
+      "_expected_category": "account",
+      "_expected_match": "acct_reset_password"
+    },
+    {
+      "question": "how much does the pro plan cost per month",
+      "_expected_category": "billing",
+      "_expected_match": "bill_view_invoice"
+    },
+    {
+      "question": "I want to stop being charged",
+      "_expected_category": "billing",
+      "_expected_match": "bill_cancel_sub"
+    },
+    {
+      "question": "where is my package it's been two weeks",
+      "_expected_category": "shipping",
+      "_expected_match": "ship_track"
+    },
+    {
+      "question": "the thing I ordered arrived broken",
+      "_expected_category": "returns",
+      "_expected_match": "ret_damaged"
+    },
+    {
+      "question": "everything is super slow today",
+      "_expected_category": "technical",
+      "_expected_match": "tech_slow"
+    },
+    {
+      "question": "I keep getting an error when I try to sign in",
+      "_expected_category": "technical",
+      "_expected_match": "tech_login_fail"
+    },
+    {
+      "question": "how do I connect this to slack",
+      "_expected_category": "product",
+      "_expected_match": "prod_integrations"
+    },
+    {
+      "question": "can I send this back and get something else",
+      "_expected_category": "returns",
+      "_expected_match": "ret_exchange"
+    },
+    {
+      "question": "I need to talk to a real person",
+      "_expected_category": "general",
+      "_expected_match": "gen_contact"
+    }
+  ]
+}
