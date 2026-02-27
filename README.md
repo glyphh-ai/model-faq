@@ -5,15 +5,15 @@ Domain-agnostic FAQ model for helpdesk and knowledge base agents. Matches user q
 ## Getting Started
 
 ```bash
-# Install glyphh
-pip install glyphh
+# Install glyphh (single-quotes required in zsh)
+pip install 'glyphh[runtime]'
 
 # Clone and run locally
 git clone https://github.com/glyphh-ai/model-faq.git
 cd model-faq
 
 # Start the local dev server (no account needed)
-glyphh dev . -d
+glyphh dev .
 
 # Query it
 glyphh chat "I forgot my password"
@@ -23,18 +23,34 @@ glyphh chat "can I get a refund"
 
 The server runs at `http://localhost:8002`. Open the Chat URL shown in the startup output to use the browser UI.
 
+Use the **up-arrow** in `glyphh chat` to replay previous queries — history persists in `~/.glyphh/chat_history`.
+
 ## How It Works
 
 User question → IntentExtractor (keywords + category) → HDC encode (10,000d) → cosine similarity against stored FAQ entries → best matching answer + category + confidence.
 
 Primary matching signal: **bag-of-words on the question text**. Shared words between a user question ("forgot my password") and an FAQ entry ("how do I reset my password") drive similarity — no LLM, no embeddings API call.
 
+### Response States
+
+The runtime returns one of five states with every query:
+
+| State | Meaning |
+|-------|---------|
+| `DONE` | Match found — confidence + answer returned |
+| `ASK` | Query too vague or matches multiple options equally |
+| `BLOCKED` | Action requires a prerequisite |
+| `AUTH_REQUIRED` | Action requires authentication |
+| `ERROR` | Query failed |
+
+When `ASK` is returned, the CLI shows the clarifying question and any disambiguation options. Models can export an `assess_query()` function to define their own slot-completeness rules — see the [Glyphh docs](https://glyphh.ai/docs?page=models-development) for the full contract.
+
 ## Model Structure
 
 ```
 faq/
 ├── manifest.yaml          # model identity and metadata
-├── config.yaml            # runtime config
+├── config.yaml            # runtime config (similarity threshold, min_gap)
 ├── encoder.py             # EncoderConfig + encode_query + entry_to_record
 ├── build.py               # package model into .glyphh file
 ├── data/
@@ -80,7 +96,7 @@ Replace `data/faq.jsonl` with your own Q&A pairs. Each line:
 
 `question_id` and `category` are auto-generated if omitted — the encoder infers category from the question text via IntentExtractor + keyword signals.
 
-**keywords** should include synonyms, abbreviations, and related terms that users might phrase the question with but that aren't in the question itself.
+**keywords** should include synonyms, abbreviations, and related terms that users might phrase the question with but that aren't in the question itself. Keywords should also cover phrasing variations that don't appear in the question — e.g. `"received damaged"` for an entry titled "what if my item arrived broken".
 
 ## Testing
 
@@ -95,7 +111,7 @@ cd faq/
 pytest tests/ -v
 ```
 
-The test suite encodes 10 raw user questions (no answers) and verifies the model returns the correct category and `question_id` for each.
+36 tests across encoding, similarity, and query inference. The suite encodes 10 raw user questions (no answers) and verifies the model returns the correct category and `question_id` for each.
 
 ## Benchmark
 
