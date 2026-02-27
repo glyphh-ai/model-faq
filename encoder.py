@@ -6,8 +6,12 @@ Exports:
   encode_query(query) — converts NL question to a Concept for similarity search
   entry_to_record(entry) — converts a JSONL entry to an encodable record
 
-The model is intentionally simple: questions go in, best matching
-answer comes out. No verb/object decomposition — just semantic matching.
+Primary matching signal: bag-of-words on the question field. Shared words
+between a user question ("forgot my password") and an FAQ entry ("how do I
+reset my password") drive similarity — no verb/object decomposition needed.
+
+IntentExtractor handles keyword extraction and provides domain/action signals
+to boost category inference accuracy.
 """
 
 import hashlib
@@ -18,8 +22,9 @@ from glyphh.core.config import (
     Layer,
     Role,
     Segment,
-    TemporalConfig,
 )
+from glyphh.intent import get_extractor
+
 
 # ---------------------------------------------------------------------------
 # ENCODER_CONFIG
@@ -28,8 +33,7 @@ from glyphh.core.config import (
 ENCODER_CONFIG = EncoderConfig(
     dimension=10000,
     seed=42,
-    temporal_source="auto",
-    temporal_config=TemporalConfig(signal_type="auto"),
+    include_temporal=False,
     layers=[
         Layer(
             name="semantic",
@@ -42,12 +46,14 @@ ENCODER_CONFIG = EncoderConfig(
                             name="question_id",
                             similarity_weight=0.1,
                             key_part=True,
-                            lexicons=["id", "question id", "faq id"],
                         ),
                         Role(
                             name="category",
                             similarity_weight=0.6,
-                            lexicons=["category", "topic", "department", "type"],
+                            lexicons=[
+                                "account", "billing", "product",
+                                "shipping", "returns", "technical", "general",
+                            ],
                         ),
                     ],
                 ),
@@ -57,12 +63,12 @@ ENCODER_CONFIG = EncoderConfig(
                         Role(
                             name="question",
                             similarity_weight=1.0,
-                            lexicons=["question", "query", "ask", "help"],
+                            text_encoding="bag_of_words",
                         ),
                         Role(
                             name="answer",
                             similarity_weight=0.4,
-                            lexicons=["answer", "response", "solution", "reply"],
+                            text_encoding="bag_of_words",
                         ),
                     ],
                 ),
@@ -78,7 +84,7 @@ ENCODER_CONFIG = EncoderConfig(
                         Role(
                             name="keywords",
                             similarity_weight=0.8,
-                            lexicons=["keywords", "tags", "terms", "related"],
+                            text_encoding="bag_of_words",
                         ),
                     ],
                 ),
@@ -93,40 +99,71 @@ ENCODER_CONFIG = EncoderConfig(
 # ---------------------------------------------------------------------------
 
 _CATEGORY_SIGNALS = {
-    "account": ["account", "login", "password", "sign in", "register", "profile",
-                "username", "email", "verify", "two-factor", "2fa", "mfa"],
-    "billing": ["billing", "invoice", "charge", "payment", "subscription", "plan",
-                "upgrade", "downgrade", "refund", "credit card", "receipt", "price"],
-    "product": ["feature", "how to", "how do", "use", "setup", "configure",
-                "integration", "api", "dashboard", "settings", "tutorial"],
-    "shipping": ["shipping", "delivery", "track", "tracking", "ship", "arrive",
-                 "package", "courier", "estimated", "transit"],
-    "returns": ["return", "exchange", "refund", "warranty", "damaged", "wrong item",
-                "cancel order", "return policy"],
+    "account":   ["account", "login", "password", "sign in", "register", "profile",
+                  "verify", "2fa", "mfa", "username", "email address", "two-factor"],
+    "billing":   ["billing", "invoice", "charge", "payment", "subscription", "plan",
+                  "upgrade", "downgrade", "refund", "credit card", "receipt", "price",
+                  "cost", "fee", "charged", "billed", "money back"],
+    "product":   ["feature", "setup", "configure", "integration", "api", "dashboard",
+                  "settings", "tutorial", "get started", "how to use", "install",
+                  "connect", "enable", "available"],
+    "shipping":  ["shipping", "delivery", "track", "tracking", "ship", "arrive",
+                  "package", "courier", "transit", "estimated", "international",
+                  "deliver", "order", "package"],
+    "returns":   ["return", "exchange", "warranty", "damaged", "broken", "wrong item",
+                  "cancel order", "return policy", "send back", "send it back",
+                  "wrong", "defective"],
     "technical": ["error", "bug", "crash", "not working", "broken", "fix", "issue",
-                  "troubleshoot", "debug", "timeout", "500", "404"],
-    "general": ["hello", "hi", "thanks", "help", "contact", "hours", "phone"],
+                  "troubleshoot", "debug", "timeout", "500", "404", "slow",
+                  "loading", "problem", "fails", "failing"],
+    "general":   ["contact", "support", "business hours", "phone", "privacy policy",
+                  "data", "gdpr", "hours", "talk to", "speak to", "human"],
 }
 
-_STOP_WORDS = {
-    "how", "do", "i", "a", "the", "to", "is", "what", "my", "an",
-    "can", "does", "it", "in", "on", "for", "with", "me", "about",
-    "are", "which", "who", "will", "their", "this", "that", "of",
-    "please", "need", "want", "would", "like", "could", "should",
+# IntentExtractor domain → FAQ category shortcut
+_DOMAIN_CATEGORY: dict[str, str] = {
+    "payments": "billing",
+    "tickets":  "technical",
+}
+
+# IntentExtractor action → FAQ category shortcut
+_ACTION_CATEGORY: dict[str, str] = {
+    "charge":      "billing",
+    "refund":      "billing",
+    "subscribe":   "billing",
+    "cancel":      "billing",
+    "track":       "shipping",
 }
 
 
-def _infer_category(text):
-    """Infer FAQ category from question text."""
+def _infer_category(text: str, domain: str = "", action: str = "") -> str:
+    """Infer FAQ category from text + optional IntentExtractor signals.
+
+    Text signals take priority. Domain/action shortcuts are used only as
+    a fallback when the text contains no recognisable category signals.
+    """
     lower = text.lower()
-    best_cat = "general"
-    best_score = 0
+    best_cat, best_score = "general", 0
     for cat, signals in _CATEGORY_SIGNALS.items():
         score = sum(1 for s in signals if s in lower)
         if score > best_score:
             best_score = score
             best_cat = cat
+
+    if best_score > 0:
+        return best_cat
+
+    # No text signal found — use IntentExtractor shortcuts as fallback
+    if domain in _DOMAIN_CATEGORY:
+        return _DOMAIN_CATEGORY[domain]
+    if action in _ACTION_CATEGORY:
+        return _ACTION_CATEGORY[action]
     return best_cat
+
+
+def _preprocess(text: str) -> str:
+    """Lowercase and normalise punctuation for consistent BoW encoding."""
+    return re.sub(r"[^\w\s]", " ", text.lower()).strip()
 
 
 # ---------------------------------------------------------------------------
@@ -135,11 +172,17 @@ def _infer_category(text):
 
 def encode_query(query: str) -> dict:
     """Convert a raw NL question into a Concept-compatible dict."""
-    cleaned = re.sub(r"[^\w\s]", "", query.lower())
-    words = cleaned.split()
+    cleaned = _preprocess(query)
 
-    category = _infer_category(query)
-    keywords = " ".join(w for w in words if w not in _STOP_WORDS)
+    extractor = get_extractor()
+    extracted = extractor.extract(cleaned)
+
+    category = _infer_category(
+        cleaned,
+        domain=extracted.get("domain") or "",
+        action=extracted.get("action") or "",
+    )
+    keywords = extracted.get("keywords") or cleaned
 
     stable_id = int(hashlib.md5(query.encode()).hexdigest()[:8], 16)
 
@@ -148,7 +191,7 @@ def encode_query(query: str) -> dict:
         "attributes": {
             "question_id": "",
             "category": category,
-            "question": query,
+            "question": cleaned,
             "answer": "",
             "keywords": keywords,
         },
@@ -161,12 +204,12 @@ def encode_query(query: str) -> dict:
 
 def entry_to_record(entry: dict) -> dict:
     """Convert a JSONL entry to an encodable record with metadata."""
-    question = entry.get("question", "")
+    question   = entry.get("question", "")
     question_id = entry.get("question_id", "")
-    category = entry.get("category", "")
-    answer = entry.get("answer", "")
-    kw_list = entry.get("keywords", [])
-    kw_str = " ".join(kw_list) if isinstance(kw_list, list) else str(kw_list)
+    category   = entry.get("category", "")
+    answer     = entry.get("answer", "")
+    kw_list    = entry.get("keywords", [])
+    kw_str     = " ".join(kw_list) if isinstance(kw_list, list) else str(kw_list)
 
     # Auto-generate question_id if not provided
     if not question_id:
@@ -177,19 +220,23 @@ def entry_to_record(entry: dict) -> dict:
     if not category:
         category = _infer_category(question)
 
+    # Preprocess text for consistent BoW encoding
+    question_clean = _preprocess(question)
+    answer_clean   = _preprocess(answer)
+
     return {
         "concept_text": question,
         "attributes": {
             "question_id": question_id,
-            "category": category,
-            "question": question,
-            "answer": answer,
-            "keywords": kw_str,
+            "category":    category,
+            "question":    question_clean,
+            "answer":      answer_clean,
+            "keywords":    kw_str,
         },
         "metadata": {
-            "answer": answer,
-            "category": category,
-            "question_id": question_id,
+            "answer":            answer,
+            "category":          category,
+            "question_id":       question_id,
             "original_question": question,
         },
     }

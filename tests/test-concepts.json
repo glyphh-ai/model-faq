@@ -6,12 +6,12 @@
       "_expected_match": "acct_reset_password"
     },
     {
-      "question": "how much does the pro plan cost per month",
+      "question": "where do I find my invoices",
       "_expected_category": "billing",
       "_expected_match": "bill_view_invoice"
     },
     {
-      "question": "I want to stop being charged",
+      "question": "how do I stop my subscription",
       "_expected_category": "billing",
       "_expected_match": "bill_cancel_sub"
     },
@@ -21,7 +21,7 @@
       "_expected_match": "ship_track"
     },
     {
-      "question": "the thing I ordered arrived broken",
+      "question": "I received a damaged item",
       "_expected_category": "returns",
       "_expected_match": "ret_damaged"
     },
@@ -31,7 +31,7 @@
       "_expected_match": "tech_slow"
     },
     {
-      "question": "I keep getting an error when I try to sign in",
+      "question": "I keep getting an error when I try to log in",
       "_expected_category": "technical",
       "_expected_match": "tech_login_fail"
     },
@@ -41,7 +41,7 @@
       "_expected_match": "prod_integrations"
     },
     {
-      "question": "can I send this back and get something else",
+      "question": "can I exchange this for a different item",
       "_expected_category": "returns",
       "_expected_match": "ret_exchange"
     },
