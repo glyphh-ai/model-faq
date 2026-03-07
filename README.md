@@ -22,6 +22,18 @@ glyphh
 # glyphh> chat "can I get a refund"
 ```
 
+### Deploy via .glyphh package
+
+For remote or cloud deploys, load data explicitly after deploying:
+
+```bash
+# glyphh> model package                     # build .glyphh package
+# glyphh> model deploy model-faq.glyphh     # deploy model config
+# glyphh> model load data/faq.jsonl          # load FAQ entries
+```
+
+`dev start .` auto-loads data from the model directory. Package deploys require the separate `model load` step.
+
 The server runs at `http://localhost:8002`. Open the Chat URL shown in the startup output to use the browser UI.
 
 Use the **up-arrow** in `glyphh chat` to replay previous queries — history persists in `~/.glyphh/chat_history`.
