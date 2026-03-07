@@ -8,17 +8,18 @@ Domain-agnostic FAQ model for helpdesk and knowledge base agents. Matches user q
 # Install glyphh (single-quotes required in zsh)
 pip install 'glyphh[runtime]'
 
-# Clone and run locally
+# Clone and start
 git clone https://github.com/glyphh-ai/model-faq.git
 cd model-faq
 
-# Start the local dev server (no account needed)
-glyphh dev .
+# Start the Glyphh shell (prompts login on first run)
+glyphh
 
-# Query it
-glyphh chat "I forgot my password"
-glyphh chat "where is my order"
-glyphh chat "can I get a refund"
+# Inside the shell:
+# glyphh> dev start .          # starts local dev server
+# glyphh> chat "I forgot my password"
+# glyphh> chat "where is my order"
+# glyphh> chat "can I get a refund"
 ```
 
 The server runs at `http://localhost:8002`. Open the Chat URL shown in the startup output to use the browser UI.
@@ -101,10 +102,10 @@ Replace `data/faq.jsonl` with your own Q&A pairs. Each line:
 ## Testing
 
 ```bash
-# Via CLI
-glyphh model test ./faq
-glyphh model test ./faq -v
-glyphh model test ./faq -k similarity
+# Inside the glyphh shell:
+# glyphh> model test .
+# glyphh> model test . -v
+# glyphh> model test . -k similarity
 
 # Directly with pytest
 cd faq/
