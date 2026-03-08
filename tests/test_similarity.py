@@ -74,8 +74,8 @@ def _find_best_match(query_text, faq_glyphs, encoder):
 # Per-query match tests
 # ---------------------------------------------------------------------------
 
-def test_password_question_matches_account(encoder, faq_glyphs, test_queries):
-    q = next(q for q in test_queries if "password" in q["question"].lower())
+def test_install_question_matches_getting_started(encoder, faq_glyphs, test_queries):
+    q = next(q for q in test_queries if "install" in q["question"].lower())
     meta, score = _find_best_match(q["question"], faq_glyphs, encoder)
     assert meta["category"] == q["_expected_category"], (
         f"Expected {q['_expected_category']}, got {meta['category']} (score={score:.4f})"
@@ -85,27 +85,16 @@ def test_password_question_matches_account(encoder, faq_glyphs, test_queries):
     )
 
 
-def test_cancel_subscription_matches_billing(encoder, faq_glyphs, test_queries):
-    q = next(q for q in test_queries if "subscription" in q["question"].lower())
+def test_glyph_question_matches_sdk(encoder, faq_glyphs, test_queries):
+    q = next(q for q in test_queries if "glyph" in q["question"].lower() and "encoding" in q["question"].lower())
     meta, score = _find_best_match(q["question"], faq_glyphs, encoder)
     assert meta["category"] == q["_expected_category"], (
         f"Expected {q['_expected_category']}, got {meta['category']} (score={score:.4f})"
     )
 
 
-def test_package_question_matches_shipping(encoder, faq_glyphs, test_queries):
-    q = next(q for q in test_queries if "package" in q["question"].lower())
-    meta, score = _find_best_match(q["question"], faq_glyphs, encoder)
-    assert meta["category"] == q["_expected_category"], (
-        f"Expected {q['_expected_category']}, got {meta['category']} (score={score:.4f})"
-    )
-    assert meta["question_id"] == q["_expected_match"], (
-        f"Expected {q['_expected_match']}, got {meta['question_id']} (score={score:.4f})"
-    )
-
-
-def test_damaged_item_matches_returns(encoder, faq_glyphs, test_queries):
-    q = next(q for q in test_queries if "damaged" in q["question"].lower())
+def test_runtime_server_matches_runtime(encoder, faq_glyphs, test_queries):
+    q = next(q for q in test_queries if "runtime server" in q["question"].lower())
     meta, score = _find_best_match(q["question"], faq_glyphs, encoder)
     assert meta["category"] == q["_expected_category"], (
         f"Expected {q['_expected_category']}, got {meta['category']} (score={score:.4f})"
@@ -115,8 +104,8 @@ def test_damaged_item_matches_returns(encoder, faq_glyphs, test_queries):
     )
 
 
-def test_slow_app_matches_technical(encoder, faq_glyphs, test_queries):
-    q = next(q for q in test_queries if "slow" in q["question"].lower())
+def test_cli_question_matches_cli(encoder, faq_glyphs, test_queries):
+    q = next(q for q in test_queries if "cli" in q["question"].lower())
     meta, score = _find_best_match(q["question"], faq_glyphs, encoder)
     assert meta["category"] == q["_expected_category"], (
         f"Expected {q['_expected_category']}, got {meta['category']} (score={score:.4f})"
@@ -126,8 +115,8 @@ def test_slow_app_matches_technical(encoder, faq_glyphs, test_queries):
     )
 
 
-def test_login_error_matches_technical(encoder, faq_glyphs, test_queries):
-    q = next(q for q in test_queries if "error" in q["question"].lower() and "log in" in q["question"].lower())
+def test_custom_model_matches_models(encoder, faq_glyphs, test_queries):
+    q = next(q for q in test_queries if "custom model" in q["question"].lower())
     meta, score = _find_best_match(q["question"], faq_glyphs, encoder)
     assert meta["category"] == q["_expected_category"], (
         f"Expected {q['_expected_category']}, got {meta['category']} (score={score:.4f})"
@@ -137,8 +126,8 @@ def test_login_error_matches_technical(encoder, faq_glyphs, test_queries):
     )
 
 
-def test_integration_question_matches_product(encoder, faq_glyphs, test_queries):
-    q = next(q for q in test_queries if "slack" in q["question"].lower())
+def test_hdc_question_matches_architecture(encoder, faq_glyphs, test_queries):
+    q = next(q for q in test_queries if "hyperdimensional" in q["question"].lower())
     meta, score = _find_best_match(q["question"], faq_glyphs, encoder)
     assert meta["category"] == q["_expected_category"], (
         f"Expected {q['_expected_category']}, got {meta['category']} (score={score:.4f})"
@@ -148,8 +137,8 @@ def test_integration_question_matches_product(encoder, faq_glyphs, test_queries)
     )
 
 
-def test_exchange_question_matches_returns(encoder, faq_glyphs, test_queries):
-    q = next(q for q in test_queries if "exchange" in q["question"].lower())
+def test_deploy_heroku_matches_deployment(encoder, faq_glyphs, test_queries):
+    q = next(q for q in test_queries if "heroku" in q["question"].lower())
     meta, score = _find_best_match(q["question"], faq_glyphs, encoder)
     assert meta["category"] == q["_expected_category"], (
         f"Expected {q['_expected_category']}, got {meta['category']} (score={score:.4f})"
@@ -159,8 +148,30 @@ def test_exchange_question_matches_returns(encoder, faq_glyphs, test_queries):
     )
 
 
-def test_contact_question_matches_general(encoder, faq_glyphs, test_queries):
-    q = next(q for q in test_queries if "real person" in q["question"].lower())
+def test_pricing_question_matches_pricing(encoder, faq_glyphs, test_queries):
+    q = next(q for q in test_queries if "pricing" in q["question"].lower())
+    meta, score = _find_best_match(q["question"], faq_glyphs, encoder)
+    assert meta["category"] == q["_expected_category"], (
+        f"Expected {q['_expected_category']}, got {meta['category']} (score={score:.4f})"
+    )
+    assert meta["question_id"] == q["_expected_match"], (
+        f"Expected {q['_expected_match']}, got {meta['question_id']} (score={score:.4f})"
+    )
+
+
+def test_low_scores_matches_troubleshooting(encoder, faq_glyphs, test_queries):
+    q = next(q for q in test_queries if "similarity scores" in q["question"].lower())
+    meta, score = _find_best_match(q["question"], faq_glyphs, encoder)
+    assert meta["category"] == q["_expected_category"], (
+        f"Expected {q['_expected_category']}, got {meta['category']} (score={score:.4f})"
+    )
+    assert meta["question_id"] == q["_expected_match"], (
+        f"Expected {q['_expected_match']}, got {meta['question_id']} (score={score:.4f})"
+    )
+
+
+def test_support_question_matches_general(encoder, faq_glyphs, test_queries):
+    q = next(q for q in test_queries if "support" in q["question"].lower())
     meta, score = _find_best_match(q["question"], faq_glyphs, encoder)
     assert meta["category"] == q["_expected_category"], (
         f"Expected {q['_expected_category']}, got {meta['category']} (score={score:.4f})"

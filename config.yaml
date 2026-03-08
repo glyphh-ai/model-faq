@@ -1,16 +1,16 @@
-# FAQ Helpdesk Model
-# Matches user questions to knowledge base answers via HDC similarity.
-# Replace data/faq.jsonl with your own Q&A pairs.
+# Glyphh AI Knowledge Base
+# Exhaustive FAQ model for the Glyphh platform.
 
-name: faq-helpdesk
-version: 0.1.0
+name: glyphh-faq
+version: 0.2.0
 description: |
-  Domain-agnostic FAQ model. Encodes questions and answers into
-  HDC vectors. User queries match against stored Q&A pairs by
-  meaning, not keywords. Works for any helpdesk domain.
+  Glyphh AI knowledge base FAQ model. Encodes questions and answers
+  about the Glyphh platform into HDC vectors. Covers SDK, runtime,
+  CLI, models, architecture, deployment, pricing, security, and
+  troubleshooting.
 
 author: Glyphh AI
-license: MIT
+license: Proprietary
 
 encoder:
   dimensions: 10000
@@ -32,12 +32,16 @@ roles:
   category:
     type: categorical
     values:
-      - account
-      - billing
-      - product
-      - shipping
-      - returns
-      - technical
+      - getting_started
+      - sdk
+      - runtime
+      - cli
+      - models
+      - architecture
+      - deployment
+      - pricing
+      - security
+      - troubleshooting
       - general
 
   question:
@@ -51,5 +55,6 @@ roles:
     optional: true
 
 similarity:
-  threshold: 0.5
+  threshold: 0.40
   top_k: 3
+  min_gap: 0.03

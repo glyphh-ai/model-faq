@@ -77,11 +77,15 @@ def test_keywords_uses_bag_of_words(encoder_config):
 
 
 def test_category_has_valid_lexicons(encoder_config):
-    """Category lexicons must be the actual 7 FAQ categories."""
+    """Category lexicons must be the 11 Glyphh AI FAQ categories."""
     semantic = next(l for l in encoder_config.layers if l.name == "semantic")
     identity = next(s for s in semantic.segments if s.name == "identity")
     cat_role = next(r for r in identity.roles if r.name == "category")
-    expected = {"account", "billing", "product", "shipping", "returns", "technical", "general"}
+    expected = {
+        "getting_started", "sdk", "runtime", "cli", "models",
+        "architecture", "deployment", "pricing", "security",
+        "troubleshooting", "general",
+    }
     assert expected.issubset(set(cat_role.lexicons or []))
 
 
@@ -92,10 +96,10 @@ def test_category_has_valid_lexicons(encoder_config):
 def test_entry_to_record_produces_all_attributes():
     entry = {
         "question_id": "test_q",
-        "category":    "billing",
-        "question":    "how much does it cost",
-        "answer":      "Check the pricing page.",
-        "keywords":    ["pricing", "cost"],
+        "category":    "sdk",
+        "question":    "what is a Glyph",
+        "answer":      "A Glyph is a high-dimensional binary vector.",
+        "keywords":    ["glyph", "vector", "encoding"],
     }
     record = entry_to_record(entry)
     attrs  = record["attributes"]
@@ -105,9 +109,9 @@ def test_entry_to_record_produces_all_attributes():
 
 def test_entry_to_record_auto_generates_id():
     entry = {
-        "question": "what is your refund policy",
-        "answer":   "30 day refund window.",
-        "category": "returns",
+        "question": "how do I deploy to Heroku",
+        "answer":   "Use the Heroku deploy button or git push.",
+        "category": "deployment",
     }
     record = entry_to_record(entry)
     assert record["attributes"]["question_id"].startswith("faq_")
@@ -115,20 +119,20 @@ def test_entry_to_record_auto_generates_id():
 
 def test_entry_to_record_auto_infers_category():
     entry = {
-        "question": "how do I reset my password",
-        "answer":   "Go to settings.",
+        "question": "how do I install the Glyphh SDK",
+        "answer":   "pip install glyphh",
     }
     record = entry_to_record(entry)
-    assert record["attributes"]["category"] == "account"
+    assert record["attributes"]["category"] == "getting_started"
 
 
 def test_entry_to_record_lowercases_question():
     """Questions must be lowercase for consistent BoW encoding."""
     entry = {
         "question_id": "q1",
-        "question":    "How Do I Reset My Password?",
-        "answer":      "Go to Settings.",
-        "category":    "account",
+        "question":    "What Is An EncoderConfig?",
+        "answer":      "An EncoderConfig defines layers and roles.",
+        "category":    "sdk",
     }
     record = entry_to_record(entry)
     assert record["attributes"]["question"] == record["attributes"]["question"].lower()

@@ -1,5 +1,5 @@
 """
-Custom encoder for the FAQ helpdesk model.
+Custom encoder for the Glyphh AI FAQ knowledge base model.
 
 Exports:
   ENCODER_CONFIG — EncoderConfig with semantic + context layers
@@ -7,11 +7,10 @@ Exports:
   entry_to_record(entry) — converts a JSONL entry to an encodable record
 
 Primary matching signal: bag-of-words on the question field. Shared words
-between a user question ("forgot my password") and an FAQ entry ("how do I
-reset my password") drive similarity — no verb/object decomposition needed.
+between a user question ("how do I install glyphh") and an FAQ entry
+("how do I install the Glyphh SDK") drive similarity.
 
-IntentExtractor handles keyword extraction and provides domain/action signals
-to boost category inference accuracy.
+Category inference provides a secondary boost via lexicon encoding.
 """
 
 import hashlib
@@ -23,7 +22,8 @@ from glyphh.core.config import (
     Role,
     Segment,
 )
-from glyphh.intent import get_extractor
+
+from intent import infer_category, extract_keywords, _preprocess
 
 
 # ---------------------------------------------------------------------------
@@ -51,8 +51,10 @@ ENCODER_CONFIG = EncoderConfig(
                             name="category",
                             similarity_weight=0.6,
                             lexicons=[
-                                "account", "billing", "product",
-                                "shipping", "returns", "technical", "general",
+                                "getting_started", "sdk", "runtime", "cli",
+                                "models", "architecture", "deployment",
+                                "pricing", "security", "troubleshooting",
+                                "general",
                             ],
                         ),
                     ],
@@ -95,94 +97,14 @@ ENCODER_CONFIG = EncoderConfig(
 
 
 # ---------------------------------------------------------------------------
-# Category inference
-# ---------------------------------------------------------------------------
-
-_CATEGORY_SIGNALS = {
-    "account":   ["account", "login", "password", "sign in", "register", "profile",
-                  "verify", "2fa", "mfa", "username", "email address", "two-factor"],
-    "billing":   ["billing", "invoice", "charge", "payment", "subscription", "plan",
-                  "upgrade", "downgrade", "refund", "credit card", "receipt", "price",
-                  "cost", "fee", "charged", "billed", "money back"],
-    "product":   ["feature", "setup", "configure", "integration", "api", "dashboard",
-                  "settings", "tutorial", "get started", "how to use", "install",
-                  "connect", "enable", "available"],
-    "shipping":  ["shipping", "delivery", "track", "tracking", "ship", "arrive",
-                  "package", "courier", "transit", "estimated", "international",
-                  "deliver", "order", "package"],
-    "returns":   ["return", "exchange", "warranty", "damaged", "broken", "wrong item",
-                  "cancel order", "return policy", "send back", "send it back",
-                  "wrong", "defective"],
-    "technical": ["error", "bug", "crash", "not working", "broken", "fix", "issue",
-                  "troubleshoot", "debug", "timeout", "500", "404", "slow",
-                  "loading", "problem", "fails", "failing"],
-    "general":   ["contact", "support", "business hours", "phone", "privacy policy",
-                  "data", "gdpr", "hours", "talk to", "speak to", "human"],
-}
-
-# IntentExtractor domain → FAQ category shortcut
-_DOMAIN_CATEGORY: dict[str, str] = {
-    "payments": "billing",
-    "tickets":  "technical",
-}
-
-# IntentExtractor action → FAQ category shortcut
-_ACTION_CATEGORY: dict[str, str] = {
-    "charge":      "billing",
-    "refund":      "billing",
-    "subscribe":   "billing",
-    "cancel":      "billing",
-    "track":       "shipping",
-}
-
-
-def _infer_category(text: str, domain: str = "", action: str = "") -> str:
-    """Infer FAQ category from text + optional IntentExtractor signals.
-
-    Text signals take priority. Domain/action shortcuts are used only as
-    a fallback when the text contains no recognisable category signals.
-    """
-    lower = text.lower()
-    best_cat, best_score = "general", 0
-    for cat, signals in _CATEGORY_SIGNALS.items():
-        score = sum(1 for s in signals if s in lower)
-        if score > best_score:
-            best_score = score
-            best_cat = cat
-
-    if best_score > 0:
-        return best_cat
-
-    # No text signal found — use IntentExtractor shortcuts as fallback
-    if domain in _DOMAIN_CATEGORY:
-        return _DOMAIN_CATEGORY[domain]
-    if action in _ACTION_CATEGORY:
-        return _ACTION_CATEGORY[action]
-    return best_cat
-
-
-def _preprocess(text: str) -> str:
-    """Lowercase and normalise punctuation for consistent BoW encoding."""
-    return re.sub(r"[^\w\s]", " ", text.lower()).strip()
-
-
-# ---------------------------------------------------------------------------
 # encode_query — NL question → Concept dict
 # ---------------------------------------------------------------------------
 
 def encode_query(query: str) -> dict:
     """Convert a raw NL question into a Concept-compatible dict."""
     cleaned = _preprocess(query)
-
-    extractor = get_extractor()
-    extracted = extractor.extract(cleaned)
-
-    category = _infer_category(
-        cleaned,
-        domain=extracted.get("domain") or "",
-        action=extracted.get("action") or "",
-    )
-    keywords = extracted.get("keywords") or cleaned
+    category = infer_category(cleaned)
+    keywords = extract_keywords(cleaned)
 
     stable_id = int(hashlib.md5(query.encode()).hexdigest()[:8], 16)
 
@@ -204,12 +126,12 @@ def encode_query(query: str) -> dict:
 
 def entry_to_record(entry: dict) -> dict:
     """Convert a JSONL entry to an encodable record with metadata."""
-    question   = entry.get("question", "")
+    question = entry.get("question", "")
     question_id = entry.get("question_id", "")
-    category   = entry.get("category", "")
-    answer     = entry.get("answer", "")
-    kw_list    = entry.get("keywords", [])
-    kw_str     = " ".join(kw_list) if isinstance(kw_list, list) else str(kw_list)
+    category = entry.get("category", "")
+    answer = entry.get("answer", "")
+    kw_list = entry.get("keywords", [])
+    kw_str = " ".join(kw_list) if isinstance(kw_list, list) else str(kw_list)
 
     # Auto-generate question_id if not provided
     if not question_id:
@@ -218,25 +140,25 @@ def entry_to_record(entry: dict) -> dict:
 
     # Auto-infer category if not provided
     if not category:
-        category = _infer_category(question)
+        category = infer_category(question)
 
     # Preprocess text for consistent BoW encoding
     question_clean = _preprocess(question)
-    answer_clean   = _preprocess(answer)
+    answer_clean = _preprocess(answer)
 
     return {
         "concept_text": question,
         "attributes": {
             "question_id": question_id,
-            "category":    category,
-            "question":    question_clean,
-            "answer":      answer_clean,
-            "keywords":    kw_str,
+            "category": category,
+            "question": question_clean,
+            "answer": answer_clean,
+            "keywords": kw_str,
         },
         "metadata": {
-            "answer":            answer,
-            "category":          category,
-            "question_id":       question_id,
+            "answer": answer,
+            "category": category,
+            "question_id": question_id,
             "original_question": question,
         },
     }

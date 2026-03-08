@@ -8,35 +8,59 @@ sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 from encoder import encode_query
 
 
-def test_account_query_infers_account():
-    result = encode_query("I forgot my password")
-    assert result["attributes"]["category"] == "account"
+def test_getting_started_query():
+    result = encode_query("how do I install Glyphh")
+    assert result["attributes"]["category"] == "getting_started"
 
 
-def test_billing_query_infers_billing():
-    result = encode_query("why was I charged twice on my invoice")
-    assert result["attributes"]["category"] == "billing"
+def test_sdk_query():
+    result = encode_query("what is a Glyph and how does encoding work")
+    assert result["attributes"]["category"] == "sdk"
 
 
-def test_shipping_query_infers_shipping():
-    result = encode_query("where is my delivery tracking number")
-    assert result["attributes"]["category"] == "shipping"
+def test_runtime_query():
+    result = encode_query("how do I start the runtime server")
+    assert result["attributes"]["category"] == "runtime"
 
 
-def test_returns_query_infers_returns():
-    result = encode_query("I want to return this and get a refund")
-    # Returns and billing both contain "refund" — returns wins because of "return"
-    assert result["attributes"]["category"] in ("returns", "billing")
+def test_cli_query():
+    result = encode_query("how do I use glyphh dev and glyphh serve from the command line terminal")
+    assert result["attributes"]["category"] == "cli"
 
 
-def test_technical_query_infers_technical():
-    result = encode_query("I keep getting an error message")
-    assert result["attributes"]["category"] == "technical"
+def test_models_query():
+    result = encode_query("how do I build a custom model with config.yaml manifest.yaml and training data jsonl")
+    assert result["attributes"]["category"] == "models"
 
 
-def test_product_query_infers_product():
-    result = encode_query("how do I configure the integration")
-    assert result["attributes"]["category"] == "product"
+def test_architecture_query():
+    result = encode_query("how does Glyphh compare to RAG and why is there no hallucination")
+    assert result["attributes"]["category"] == "architecture"
+
+
+def test_deployment_query():
+    result = encode_query("how do I deploy to Heroku with Docker")
+    assert result["attributes"]["category"] == "deployment"
+
+
+def test_pricing_query():
+    result = encode_query("what are the pricing tiers and plans")
+    assert result["attributes"]["category"] == "pricing"
+
+
+def test_security_query():
+    result = encode_query("how does API token authentication work")
+    assert result["attributes"]["category"] == "security"
+
+
+def test_troubleshooting_query():
+    result = encode_query("I keep getting an error and low similarity scores")
+    assert result["attributes"]["category"] == "troubleshooting"
+
+
+def test_general_query():
+    result = encode_query("how do I contact support or get help")
+    assert result["attributes"]["category"] == "general"
 
 
 def test_query_has_empty_question_id():
@@ -47,13 +71,13 @@ def test_query_has_empty_question_id():
 
 def test_query_has_empty_answer():
     """Queries don't have answers — the model finds them."""
-    result = encode_query("what is your return policy")
+    result = encode_query("what dimensions should I use")
     assert result["attributes"]["answer"] == ""
 
 
 def test_query_has_stable_name():
     """Same query text must produce the same concept name."""
-    q  = "how do I reset my password"
+    q  = "how do I install Glyphh"
     r1 = encode_query(q)
     r2 = encode_query(q)
     assert r1["name"] == r2["name"]
@@ -66,16 +90,15 @@ def test_question_is_lowercased():
 
 
 def test_keywords_are_non_empty():
-    """IntentExtractor should produce at least some keywords."""
-    result = encode_query("how do I find the shipping status for my order")
+    """extract_keywords should produce at least some keywords."""
+    result = encode_query("how do I deploy Glyphh to production with Docker")
     assert result["attributes"]["keywords"].strip() != ""
 
 
 def test_keywords_exclude_common_stop_words():
     """Common stop words should not dominate the keywords field."""
-    result = encode_query("how do I find the shipping status for my order")
+    result = encode_query("how do I deploy Glyphh to production with Docker")
     kw = result["attributes"]["keywords"].split()
-    # Core meaningful words should be present
-    assert any(w in kw for w in ("shipping", "status", "order", "find")), (
+    assert any(w in kw for w in ("deploy", "glyphh", "production", "docker")), (
         f"Expected meaningful keywords in: {kw}"
     )

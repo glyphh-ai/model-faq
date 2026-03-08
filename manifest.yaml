@@ -1,13 +1,14 @@
-name: FAQ Helpdesk
-description: Domain-agnostic FAQ model for helpdesk and knowledge base agents. Matches user questions to answers via HDC similarity. Replace the sample data with your own Q&A pairs.
-version: 0.1.0
+name: Glyphh AI Knowledge Base
+description: Exhaustive FAQ model covering all aspects of the Glyphh AI platform — SDK, runtime, CLI, models, architecture, deployment, pricing, security, and troubleshooting.
+version: 0.2.0
 author: Glyphh AI
-license: MIT
+license: Proprietary
 icon: 💬
 category: faq
 public: true
 tags:
   - faq
-  - helpdesk
   - knowledge-base
-  - customer-support
+  - glyphh
+  - documentation
+  - help
