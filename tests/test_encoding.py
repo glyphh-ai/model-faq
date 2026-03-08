@@ -13,7 +13,7 @@ from encoder import ENCODER_CONFIG, entry_to_record
 # ---------------------------------------------------------------------------
 
 def test_config_has_required_fields(encoder_config):
-    assert encoder_config.dimension == 10000
+    assert encoder_config.dimension == 2000
     assert encoder_config.seed == 42
     assert encoder_config.include_temporal is False
     assert len(encoder_config.layers) >= 1

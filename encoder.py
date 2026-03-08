@@ -31,7 +31,7 @@ from intent import infer_category, extract_keywords, _preprocess
 # ---------------------------------------------------------------------------
 
 ENCODER_CONFIG = EncoderConfig(
-    dimension=10000,
+    dimension=2000,
     seed=42,
     include_temporal=False,
     layers=[

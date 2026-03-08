@@ -13,7 +13,7 @@ author: Glyphh AI
 license: Proprietary
 
 encoder:
-  dimensions: 10000
+  dimensions: 2000
   seed: 42
   temporal_source: auto
 
