@@ -42,7 +42,7 @@ def faq_glyphs(encoder):
     from glyphh.core.types import Concept
     from encoder import entry_to_record
 
-    faq_path = DATA_DIR / "faq.jsonl"
+    faq_path = DATA_DIR / "exemplars.jsonl"
     glyphs = []
     with open(faq_path) as f:
         for line in f:
