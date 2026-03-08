@@ -26,7 +26,7 @@
       "_expected_match": "mod_custom_model"
     },
     {
-      "question": "how does hyperdimensional computing work in Glyphh",
+      "question": "what is hyperdimensional computing and how does HDC work",
       "_expected_category": "architecture",
       "_expected_match": "arch_hdc"
     },

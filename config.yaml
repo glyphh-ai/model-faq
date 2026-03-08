@@ -56,5 +56,5 @@ roles:
 
 similarity:
   threshold: 0.40
-  top_k: 3
-  min_gap: 0.03
+  top_k: 1
+  result_field: answer

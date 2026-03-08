@@ -53,7 +53,7 @@ _CATEGORY_SIGNALS: dict[str, list[str]] = {
         "faq model", "tool router", "function calling",
     ],
     "architecture": [
-        "hyperdimensional computing", "hdc", "deterministic",
+        "hyperdimensional computing", "hyperdimensional", "hdc", "deterministic",
         "no hallucination", "hallucination", "sidecar", "llm sidecar",
         "how does glyphh work", "how it works", "under the hood",
         "neural network", "embedding", "traditional", "difference",
@@ -83,7 +83,9 @@ _CATEGORY_SIGNALS: dict[str, list[str]] = {
     "troubleshooting": [
         "error", "bug", "issue", "problem", "not working", "broken",
         "fix", "debug", "troubleshoot", "why", "wrong", "incorrect",
-        "low score", "low similarity", "no match", "no results",
+        "low score", "low scores", "low similarity", "scores are low",
+        "scores are really low", "similarity scores",
+        "no match", "no results", "really low",
         "slow", "performance", "timeout", "crash", "memory",
         "oom", "out of memory", "500 error", "fails", "failing",
     ],
@@ -134,11 +136,16 @@ def infer_category(text: str) -> str:
 
     Returns the category with the most signal matches.
     Falls back to 'general' if no signals match.
+    Uses word-boundary matching to avoid substring collisions
+    (e.g. "glyph" must not match inside "glyphh").
     """
     lower = text.lower()
     best_cat, best_score = "general", 0
     for cat, signals in _CATEGORY_SIGNALS.items():
-        score = sum(1 for s in signals if s in lower)
+        score = sum(
+            1 for s in signals
+            if re.search(r"\b" + re.escape(s) + r"\b", lower)
+        )
         if score > best_score:
             best_score = score
             best_cat = cat
