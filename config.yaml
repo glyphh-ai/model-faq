@@ -58,3 +58,5 @@ similarity:
   threshold: 0.40
   top_k: 1
   result_field: answer
+  query_scope: semantic
+  store_hierarchical_vectors: true
