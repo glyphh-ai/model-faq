@@ -2,6 +2,8 @@
 
 Domain-agnostic FAQ model for helpdesk and knowledge base agents. Matches user questions to answers via HDC semantic similarity. Replace the sample data with your own Q&A pairs — no retraining, no embeddings API.
 
+Built on [**Glyphh Ada 1.1**](https://www.glyphh.ai/products/runtime) · **[Docs →](https://glyphh.ai/docs)** · **[Glyphh Hub →](https://glyphh.ai/hub)**
+
 ## Getting Started
 
 ```bash
@@ -16,23 +18,13 @@ cd model-faq
 glyphh
 
 # Inside the shell:
-# glyphh> dev start .          # starts local dev server
+# glyphh> dev start              # starts local dev server
+# glyphh> model package          # build .glyphh package
+# glyphh> model deploy model-faq.glyphh     # deploy to runtime
 # glyphh> chat "I forgot my password"
 # glyphh> chat "where is my order"
 # glyphh> chat "can I get a refund"
 ```
-
-### Deploy via .glyphh package
-
-For remote or cloud deploys, load data explicitly after deploying:
-
-```bash
-# glyphh> model package                     # build .glyphh package
-# glyphh> model deploy model-faq.glyphh     # deploy model config
-# glyphh> model load data/faq.jsonl          # load FAQ entries
-```
-
-`dev start .` auto-loads data from the model directory. Package deploys require the separate `model load` step.
 
 The server runs at `http://localhost:8002`. Open the Chat URL shown in the startup output to use the browser UI.
 
