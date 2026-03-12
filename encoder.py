@@ -103,8 +103,12 @@ ENCODER_CONFIG = EncoderConfig(
 def encode_query(query: str) -> dict:
     """Convert a raw NL question into a Concept-compatible dict."""
     cleaned = _preprocess(query)
-    category = infer_category(cleaned)
     keywords = extract_keywords(cleaned)
+
+    # Use keyword-filtered text as the question signal so stopword-only
+    # or single-character queries don't produce spurious matches.
+    question_text = keywords if keywords else cleaned
+    category = infer_category(cleaned)
 
     stable_id = int(hashlib.md5(query.encode()).hexdigest()[:8], 16)
 
@@ -113,7 +117,7 @@ def encode_query(query: str) -> dict:
         "attributes": {
             "question_id": "",
             "category": category,
-            "question": cleaned,
+            "question": question_text,
             "answer": "",
             "keywords": keywords,
         },

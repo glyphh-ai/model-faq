@@ -128,7 +128,7 @@ def extract_keywords(text: str) -> str:
     cleaned = _preprocess(text)
     words = cleaned.split()
     keywords = [w for w in words if w not in _STOPWORDS and len(w) > 1]
-    return " ".join(keywords) if keywords else cleaned
+    return " ".join(keywords)
 
 
 def infer_category(text: str) -> str:
