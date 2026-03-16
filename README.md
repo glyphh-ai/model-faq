@@ -6,11 +6,20 @@ Built on [**Glyphh Ada 1.1**](https://www.glyphh.ai/products/runtime) · **[Docs
 
 ## Getting Started
 
-```bash
-# Install glyphh (single-quotes required in zsh)
-pip install 'glyphh[runtime]'
+### 1. Install the Glyphh CLI
 
-# Clone and start
+```bash
+# Create and activate a virtual environment (recommended)
+python3 -m venv .venv
+source .venv/bin/activate   # Windows: .venv\Scripts\activate
+
+# Install with runtime dependencies (includes FastAPI, SQLAlchemy, pgvector)
+pip install 'glyphh[runtime]'
+```
+
+### 2. Clone and start the model
+
+```bash
 git clone https://github.com/glyphh-ai/model-faq.git
 cd model-faq
 
@@ -19,16 +28,29 @@ glyphh
 
 # Inside the shell:
 # glyphh> dev start              # starts local dev server
-# glyphh> model package          # build .glyphh package
-# glyphh> model deploy model-faq.glyphh     # deploy to runtime
+```
+
+### 3. Deploy the model
+
+```bash
+glyphh
+# glyphh> model package                          # build .glyphh package
+# glyphh> model deploy model-faq.glyphh          # deploy to runtime
+```
+
+### 4. Query the model
+
+```bash
+glyphh
 # glyphh> chat "I forgot my password"
 # glyphh> chat "where is my order"
 # glyphh> chat "can I get a refund"
+
+# Interactive REPL
+# glyphh> chat
 ```
 
-The server runs at `http://localhost:8002`. Open the Chat URL shown in the startup output to use the browser UI.
-
-Use the **up-arrow** in `glyphh chat` to replay previous queries — history persists in `~/.glyphh/chat_history`.
+The server runs at `http://localhost:8002`. Use the **up-arrow** in `glyphh chat` to replay previous queries — history persists in `~/.glyphh/chat_history`.
 
 ## How It Works
 
